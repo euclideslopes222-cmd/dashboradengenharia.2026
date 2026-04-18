@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Diagnóstico de Mercado · Engenharia 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#0B0E1A;
+  --surface:#131728;
+  --card:#181D30;
+  --card2:#1E2438;
+  --border:#252B42;
+  --border2:#2E3554;
+  --cyan:#00D4FF;
+  --cyan-dim:rgba(0,212,255,.12);
+  --green:#00E599;
+  --green-dim:rgba(0,229,153,.1);
+  --amber:#FFB547;
+  --amber-dim:rgba(255,181,71,.1);
+  --red:#FF5C6A;
+  --red-dim:rgba(255,92,106,.1);
+  --purple:#8B79F8;
+  --purple-dim:rgba(139,121,248,.1);
+  --text-1:#F0F4FF;
+  --text-2:#8891B2;
+  --text-3:#4E5A78;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text-1);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+::selection{background:var(--cyan-dim);color:var(--cyan)}
+.shell{display:flex;min-height:100vh}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:sticky;top:0;height:100vh;overflow:hidden}
+.logo{padding:0 20px 22px;border-bottom:1px solid var(--border)}
+.logo-top{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.05em;color:var(--cyan);line-height:1}
+.logo-sub{font-size:10px;color:var(--text-3);margin-top:3px;text-transform:uppercase;letter-spacing:.12em}
+.nav{padding:18px 12px;flex:1;overflow-y:auto}
+.nav-label{font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--text-3);padding:0 8px;margin-bottom:8px;margin-top:12px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-2);transition:all .2s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--card2);color:var(--text-1)}
+.nav-item.active{background:var(--cyan-dim);color:var(--cyan);border-color:rgba(0,212,255,.2)}
+.nav-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:10px;color:var(--text-3);line-height:1.7}
+
+/* ─── MAIN ─── */
+.main{flex:1;padding:28px 32px;max-width:1300px;min-width:0}
+
+/* ─── TOP BAR ─── */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+.page-title{font-size:24px;font-weight:700;color:var(--text-1);line-height:1.2}
+.page-sub{font-size:13px;color:var(--text-2);margin-top:4px}
+.filter-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-right:2px}
+.filter-btn{padding:7px 16px;border-radius:24px;font-size:12px;font-weight:500;font-family:'Outfit',sans-serif;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text-2);transition:all .2s}
+.filter-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.filter-btn.active{background:var(--cyan);color:#000;border-color:var(--cyan);font-weight:700}
+
+/* ─── KPI ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;cursor:default;transition:transform .2s,box-shadow .2s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+.kpi.c1::before{background:var(--cyan)}.kpi.c2::before{background:var(--green)}
+.kpi.c3::before{background:var(--amber)}.kpi.c4::before{background:var(--red)}
+.kpi.c5::before{background:var(--purple)}
+.kpi-label{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px}
+.kpi-value{font-family:'Bebas Neue',sans-serif;font-size:40px;line-height:1;letter-spacing:.02em}
+.kpi-sub{font-size:11px;color:var(--text-3);margin-top:5px;line-height:1.4}
+.kpi.c1 .kpi-value{color:var(--cyan)}.kpi.c2 .kpi-value{color:var(--green)}
+.kpi.c3 .kpi-value{color:var(--amber)}.kpi.c4 .kpi-value{color:var(--red)}
+.kpi.c5 .kpi-value{color:var(--purple)}
+
+/* ─── GRIDS ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+.gcol1{grid-column:1/-1}
+
+/* ─── CARD ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.ct{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.ct-left{display:flex;align-items:center;gap:8px}
+.ct-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.mb0{margin-bottom:0}
+
+/* ─── H BAR ─── */
+.hbar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.hbar-label{font-size:11px;color:var(--text-2);width:130px;flex-shrink:0;text-align:right;line-height:1.3}
+.hbar-track{flex:1;background:var(--surface);border-radius:4px;height:22px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;min-width:32px;transition:width 1s cubic-bezier(.34,1.56,.64,1)}
+.hbar-pct{font-size:10px;color:var(--text-3);width:36px;text-align:right;font-family:'DM Mono',monospace;flex-shrink:0}
+
+/* ─── DONUT ─── */
+.donut-wrap{position:relative;height:170px}
+.legend-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ─── GAUGE ─── */
+.gauge-wrap{text-align:center;padding:10px 0 4px}
+.big-num{font-family:'Bebas Neue',sans-serif;font-size:60px;line-height:1;letter-spacing:.02em}
+.gauge-label{font-size:11px;color:var(--text-2);margin-top:5px;line-height:1.4}
+.gauge-bar{height:5px;background:var(--surface);border-radius:3px;margin-top:14px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:3px;transition:width 1.4s ease}
+
+/* ─── CROSS TABLE ─── */
+.cross-head-row{display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cross-row{display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.cross-row:last-child{border-bottom:none}
+.cross-label{font-size:11px;color:var(--text-2);line-height:1.3}
+.cross-bar{height:26px;background:var(--surface);border-radius:5px;overflow:hidden}
+.cross-fill{height:100%;border-radius:5px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;transition:width 1s ease}
+.cross-head{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;text-align:center}
+
+/* ─── QUOTE ─── */
+.quote{border-left:3px solid var(--border2);padding:10px 14px;font-size:12px;color:var(--text-2);line-height:1.65;background:var(--surface);border-radius:0 8px 8px 0;transition:border-color .2s}
+.quote:hover{border-left-color:var(--cyan);color:var(--text-1)}
+.quote.q-green:hover{border-left-color:var(--green)}
+.quote.q-red:hover{border-left-color:var(--red)}
+
+/* ─── INSIGHT CARDS ─── */
+.ins-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:transform .2s,box-shadow .2s}
+.ins-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.ins-num{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;margin-bottom:8px}
+.ins-title{font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:7px}
+.ins-body{font-size:12px;color:var(--text-2);line-height:1.65}
+
+/* ─── BADGE ─── */
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:4px}
+.badge-cyan{background:var(--cyan-dim);color:var(--cyan)}
+.badge-green{background:var(--green-dim);color:var(--green)}
+.badge-amber{background:var(--amber-dim);color:var(--amber)}
+.badge-red{background:var(--red-dim);color:var(--red)}
+.badge-purple{background:var(--purple-dim);color:var(--purple)}
+
+/* ─── PAGES ─── */
+.page-section{display:none}
+.page-section.active{display:block;animation:fadeUp .35s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── KPI ANIM ─── */
+.kpi{animation:fadeUp .4s ease both}
+.kpi:nth-child(1){animation-delay:.04s}.kpi:nth-child(2){animation-delay:.08s}
+.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.16s}
+.kpi:nth-child(5){animation-delay:.20s}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+@media(max-width:960px){
+  .sidebar{display:none}.g3{grid-template-columns:1fr 1fr}
+  .kpi-row{grid-template-columns:1fr 1fr}.g12{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-top">ENG·MARKET</div>
+    <div class="logo-sub">Diagnóstico 2026</div>
+  </div>
+  <div class="nav">
+    <div class="nav-label">Análise</div>
+    <div class="nav-item active" onclick="goPage('geral',this)">
+      <div class="nav-dot" style="background:var(--cyan)"></div>Visão Geral
+    </div>
+    <div class="nav-item" onclick="goPage('perfil',this)">
+      <div class="nav-dot" style="background:var(--green)"></div>Perfil & Rotina
+    </div>
+    <div class="nav-item" onclick="goPage('ferramentas',this)">
+      <div class="nav-dot" style="background:var(--amber)"></div>Ferramentas
+    </div>
+    <div class="nav-item" onclick="goPage('satisfacao',this)">
+      <div class="nav-dot" style="background:var(--red)"></div>Satisfação
+    </div>
+    <div class="nav-item" onclick="goPage('insights',this)">
+      <div class="nav-dot" style="background:var(--purple)"></div>Insights
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <strong style="color:var(--text-1)">50 respondentes</strong><br/>
+    Maranhão · Pará · Brasil<br/>
+    Março 2026<br/><br/>
+    <span style="color:var(--cyan)">CREA-MA · UEMA · FAPEMA</span>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Visão Geral</div>
+      <div class="page-sub" id="page-sub">Panorama completo · 50 respondentes · Março 2026</div>
+    </div>
+    <div class="filter-group" id="filter-group">
+      <span class="filter-label">Filtro:</span>
+      <button class="filter-btn active" onclick="setFilter('todos',this)">Todos · 50</button>
+      <button class="filter-btn" onclick="setFilter('estudante',this)">Estudante · 17</button>
+      <button class="filter-btn" onclick="setFilter('estagiario',this)">Estagiário · 7</button>
+      <button class="filter-btn" onclick="setFilter('profissional',this)">Profissional · 26</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: VISÃO GERAL
+  ══════════════════════════════════════════ -->
+  <section class="page-section active" id="pg-geral">
+    <div class="kpi-row">
+      <div class="kpi c1">
+        <div class="kpi-label">Respondentes</div>
+        <div class="kpi-value" id="k-total">50</div>
+        <div class="kpi-sub">100% aceitaram os termos</div>
+      </div>
+      <div class="kpi c2">
+        <div class="kpi-label">Satisfeitos</div>
+        <div class="kpi-value" id="k-satisf">52%</div>
+        <div class="kpi-sub" id="k-satisf-sub">26 de 50 dizem Sim</div>
+      </div>
+      <div class="kpi c3">
+        <div class="kpi-label">Fazem freela</div>
+        <div class="kpi-value" id="k-freela">58%</div>
+        <div class="kpi-sub" id="k-freela-sub">Sim + às vezes</div>
+      </div>
+      <div class="kpi c4">
+        <div class="kpi-label">Faculdade prepara?</div>
+        <div class="kpi-value" id="k-facul">6%</div>
+        <div class="kpi-sub" id="k-facul-sub">Só 3 dizem "Sim" plenamente</div>
+      </div>
+      <div class="kpi c5">
+        <div class="kpi-label">Aceitam contato</div>
+        <div class="kpi-value">100%</div>
+        <div class="kpi-sub">46 Sim + 4 Talvez</div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--cyan)"></span>Nível profissional</div></div>
+        <div class="donut-wrap"><canvas id="c-nivel"></canvas></div>
+        <div class="legend-row">
+          <span class="leg"><span class="leg-dot" style="background:var(--cyan)"></span>Profissional 52%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Estudante 34%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Estagiário 14%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--green)"></span>Área de formação</div></div>
+        <div id="bar-eng"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--amber)"></span>Área de atuação</div></div>
+        <div id="bar-atuacao"></div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--purple)"></span>Localização</div></div>
+        <div id="bar-cidade"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>Interesse declarado</div></div>
+        <div id="bar-interesse"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: PERFIL & ROTINA
+  ══════════════════════════════════════════ -->
+  <section class="page-section" id="pg-perfil">
+    <div class="g3">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>Carga horária semanal</div></div>
+        <div class="donut-wrap"><canvas id="c-carga"></canvas></div>
+        <div class="legend-row" id="leg-carga">
+          <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>+40h 36%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>30–40h 25%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>20–30h 27%</span>
+          <span class="leg"><span class="leg-dot" style="background:#4E9EFF"></span>–20h 11%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--cyan)"></span>Tipo de trabalho</div></div>
+        <div class="donut-wrap"><canvas id="c-tipo"></canvas></div>
+        <div class="legend-row" id="leg-tipo">
+          <span class="leg"><span class="leg-dot" style="background:var(--cyan)"></span>Presencial 74%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--purple)"></span>Híbrido 18%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Remoto 7%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--amber)"></span>Deslocamento</div></div>
+        <div class="donut-wrap"><canvas id="c-desloc"></canvas></div>
+        <div class="legend-row">
+          <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Tranquilo 45%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Moderado 41%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Cansativo 14%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--purple)"></span>Freelas / Consultorias</div></div>
+        <div class="donut-wrap"><canvas id="c-freela"></canvas></div>
+        <div class="legend-row" id="leg-freela">
+          <span class="leg"><span class="leg-dot" style="background:var(--cyan)"></span>Sim 46%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Às vezes 12%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--border2)"></span>Não 38%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>Carga horária × Nível profissional</div></div>
+        <div class="cross-head-row">
+          <div></div>
+          <div class="cross-head">Estudante</div>
+          <div class="cross-head">Estagiário</div>
+          <div class="cross-head">Profissional</div>
+        </div>
+        <div class="cross-row">
+          <div class="cross-label">Mais de 40h</div>
+          <div class="cross-bar"><div class="cross-fill" style="width:42%;background:rgba(255,92,106,.5);color:var(--red)">42%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:20%;background:rgba(255,92,106,.3);color:var(--red)">20%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:54%;background:rgba(255,92,106,.7);color:var(--red)">54%</div></div>
+        </div>
+        <div class="cross-row">
+          <div class="cross-label">30h a 40h</div>
+          <div class="cross-bar"><div class="cross-fill" style="width:17%;background:rgba(255,181,71,.4);color:var(--amber)">17%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:20%;background:rgba(255,181,71,.4);color:var(--amber)">20%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:44%;background:rgba(255,181,71,.6);color:var(--amber)">44%</div></div>
+        </div>
+        <div class="cross-row">
+          <div class="cross-label">20h a 30h</div>
+          <div class="cross-bar"><div class="cross-fill" style="width:25%;background:rgba(0,229,153,.3);color:var(--green)">25%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:57%;background:rgba(0,229,153,.55);color:var(--green)">57%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:27%;background:rgba(0,229,153,.3);color:var(--green)">27%</div></div>
+        </div>
+        <div class="cross-row">
+          <div class="cross-label">Até 20h</div>
+          <div class="cross-bar"><div class="cross-fill" style="width:17%;background:rgba(0,212,255,.25);color:var(--cyan)">17%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:20%;background:rgba(0,212,255,.25);color:var(--cyan)">20%</div></div>
+          <div class="cross-bar"><div class="cross-fill" style="width:11%;background:rgba(0,212,255,.2);color:var(--cyan)">11%</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: FERRAMENTAS
+  ══════════════════════════════════════════ -->
+  <section class="page-section" id="pg-ferramentas">
+    <div class="g2">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--cyan)"></span>Ferramentas em uso · menções</div></div>
+        <div id="bar-tools"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>O que mais precisam aprender</div></div>
+        <div id="bar-learn"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--purple)"></span>Gap: Ferramentas em uso × Desejo de aprender</div></div>
+      <div style="position:relative;height:290px"><canvas id="c-radar"></canvas></div>
+    </div>
+
+    <div class="g3">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--amber)"></span>Excel ainda reina</div></div>
+        <div class="gauge-wrap">
+          <div class="big-num" style="color:var(--amber)">80%</div>
+          <div class="gauge-label">dos respondentes usam Excel<br/>ferramenta mais citada da pesquisa</div>
+          <div class="gauge-bar"><div class="gauge-fill" style="width:80%;background:var(--amber)"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>IA é a maior lacuna</div></div>
+        <div class="gauge-wrap">
+          <div class="big-num" style="color:var(--red)">13</div>
+          <div class="gauge-label">querem aprender IA / automação<br/>mais pedido entre todos os temas</div>
+          <div class="gauge-bar"><div class="gauge-fill" style="width:87%;background:var(--red)"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--purple)"></span>Revit em ascensão</div></div>
+        <div class="gauge-wrap">
+          <div class="big-num" style="color:var(--purple)">32%</div>
+          <div class="gauge-label">já usam Revit / BIM<br/>e 10 querem aprofundar</div>
+          <div class="gauge-bar"><div class="gauge-fill" style="width:32%;background:var(--purple)"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: SATISFAÇÃO
+  ══════════════════════════════════════════ -->
+  <section class="page-section" id="pg-satisfacao">
+    <div class="g3">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--green)"></span>Satisfeito com a área?</div></div>
+        <div class="donut-wrap"><canvas id="c-satisf"></canvas></div>
+        <div class="legend-row" id="leg-satisf">
+          <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Sim 52%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Mais ou menos 40%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Não 4%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--cyan)"></span>Pretende continuar na área?</div></div>
+        <div class="donut-wrap"><canvas id="c-continua"></canvas></div>
+        <div class="legend-row" id="leg-continua">
+          <span class="leg"><span class="leg-dot" style="background:var(--cyan)"></span>Sim 72%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Em dúvida 18%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Não 6%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>Faculdade prepara bem?</div></div>
+        <div class="donut-wrap"><canvas id="c-facul"></canvas></div>
+        <div class="legend-row" id="leg-facul">
+          <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Parcialmente 60%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Não 34%</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Sim 6%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--amber)"></span>Satisfação × nível profissional (% por grupo)</div></div>
+      <div style="position:relative;height:270px"><canvas id="c-cross-satisf"></canvas></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--green)"></span>O que motiva</div></div>
+        <div style="display:grid;gap:8px">
+          <div class="quote q-green">"Ver que meu trabalho realmente faz diferença no dia a dia."</div>
+          <div class="quote q-green">"Aprender coisas novas todos os dias — engenharia demanda estudo constante."</div>
+          <div class="quote q-green">"Ser engenheiro civil concursado da Petrobras. Tenho o sonho de trabalhar com obras grandes."</div>
+          <div class="quote q-green">"A área de dados tende a expandir com IA e o modelo data-driven nas empresas."</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--red)"></span>O que desanima</div></div>
+        <div style="display:grid;gap:8px">
+          <div class="quote q-red">"Muito trabalho sem receber o piso."</div>
+          <div class="quote q-red">"Profissionais formados sem emprego — dá medo de ser assim."</div>
+          <div class="quote q-red">"Oportunidades escassas para quem tem pouca experiência."</div>
+          <div class="quote q-red">"90% do que aprendi na faculdade não tem aplicação profissional no mercado."</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       PAGE: INSIGHTS
+  ══════════════════════════════════════════ -->
+  <section class="page-section" id="pg-insights">
+
+    <div class="g2" style="margin-bottom:16px">
+      <div class="ins-card" style="border-left:3px solid var(--red)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-red">01 · Formação</span>
+          <div class="ins-num" style="color:var(--red)">94%</div>
+        </div>
+        <div class="ins-title">A faculdade não prepara para o mercado</div>
+        <div class="ins-body">Apenas 3 em 50 dizem que a faculdade os preparou bem. Profissionais formados são os mais críticos: 50% dizem "Não" categoricamente — nenhum estagiário diz o mesmo. A academia e o mercado operam em mundos paralelos.</div>
+      </div>
+      <div class="ins-card" style="border-left:3px solid var(--amber)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-amber">02 · Mercado</span>
+          <div class="ins-num" style="color:var(--amber)">≈60%</div>
+        </div>
+        <div class="ins-title">Baixo salário é o principal fator de desmotivação</div>
+        <div class="ins-body">Remuneração abaixo do piso ou do esperado foi mencionada em aproximadamente 60% das respostas abertas sobre o que desanima. Presença em todos os perfis — estudante, estagiário e profissional.</div>
+      </div>
+      <div class="ins-card" style="border-left:3px solid var(--purple)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-purple">03 · Tecnologia</span>
+          <div class="ins-num" style="color:var(--purple)">IA</div>
+        </div>
+        <div class="ins-title">IA é a lacuna mais urgente e menos ensinada</div>
+        <div class="ins-body">13 respondentes citaram IA/automação como o que mais precisam aprender — nº 1 entre todos os temas. Porém, apenas 2 a citam como ferramenta já em uso. Gap entre demanda e realidade é enorme.</div>
+      </div>
+      <div class="ins-card" style="border-left:3px solid var(--cyan)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-cyan">04 · Rede</span>
+          <div class="ins-num" style="color:var(--cyan)">100%</div>
+        </div>
+        <div class="ins-title">Audiência totalmente receptiva a conexões</div>
+        <div class="ins-body">46 disseram Sim + 4 Talvez para serem contatados para oportunidades. Zero recusas. Dado revelador: esse público está ativo, disponível e com apetite por rede profissional.</div>
+      </div>
+      <div class="ins-card" style="border-left:3px solid var(--green)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-green">05 · Carreira</span>
+          <div class="ins-num" style="color:var(--green)">58%</div>
+        </div>
+        <div class="ins-title">Freela é rotina, não exceção</div>
+        <div class="ins-body">58% fazem ou fazem às vezes serviços por fora. Entre profissionais, sobe para 69%. A renda complementar já é estrutural no setor — sinal de que a renda principal não supre.</div>
+      </div>
+      <div class="ins-card" style="border-left:3px solid var(--red)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="badge badge-red">06 · Satisfação</span>
+          <div class="ins-num" style="color:var(--red)">-36pt</div>
+        </div>
+        <div class="ins-title">Mercado decepciona com o tempo</div>
+        <div class="ins-body">Satisfação cai de 71% (estudantes) para 35% (profissionais formados) — queda de 36 pontos percentuais. O ingresso no mercado é o maior evento de desilusão na carreira do engenheiro.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct"><div class="ct-left"><span class="ct-dot" style="background:var(--cyan)"></span>Ranking de interesses declarados</div></div>
+      <div style="position:relative;height:200px"><canvas id="c-interesse-bar"></canvas></div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────
+const D = {
+  todos:{
+    n:50,satisfPct:52,freelaPct:58,faculPct:6,
+    satisf:[26,20,2],continua:[36,9,3],facul:[30,17,3],
+    freela:[23,6,19],carga:[16,11,12,5],tipo:[33,8,3],
+    satisfLeg:['Sim 52%','Mais ou menos 40%','Não 4%'],
+    continualeg:['Sim 72%','Em dúvida 18%','Não 6%'],
+    faculleg:['Parcialmente 60%','Não 34%','Sim 6%'],
+    freelaleg:['Sim 46%','Às vezes 12%','Não 38%'],
+    cargaleg:['+40h 36%','30–40h 25%','20–30h 27%','–20h 11%'],
+    tipoleg:['Presencial 74%','Híbrido 18%','Remoto 7%'],
+    satisfSub:'26 de 50 dizem Sim',freelaSub:'Sim + às vezes',
+    faculSub:'Só 3 dizem "Sim" plenamente'
+  },
+  estudante:{
+    n:17,satisfPct:71,freelaPct:41,faculPct:12,
+    satisf:[12,3,0],continua:[13,2,0],facul:[12,3,2],
+    freela:[4,3,8],carga:[5,2,3,2],tipo:[9,2,1],
+    satisfLeg:['Sim 71%','Mais ou menos 18%','Não 0%'],
+    continualeg:['Sim 76%','Em dúvida 12%','Não 0%'],
+    faculleg:['Parcialmente 71%','Não 18%','Sim 12%'],
+    freelaleg:['Sim 24%','Às vezes 18%','Não 47%'],
+    cargaleg:['+40h 42%','30–40h 17%','20–30h 25%','–20h 17%'],
+    tipoleg:['Presencial 75%','Híbrido 17%','Remoto 8%'],
+    satisfSub:'12 de 17 dizem Sim',freelaSub:'Sim + às vezes',
+    faculSub:'Só 2 dizem "Sim" plenamente'
+  },
+  estagiario:{
+    n:7,satisfPct:71,freelaPct:57,faculPct:14,
+    satisf:[5,2,0],continua:[6,1,0],facul:[5,1,1],
+    freela:[3,1,3],carga:[1,1,4,1],tipo:[4,3,0],
+    satisfLeg:['Sim 71%','Mais ou menos 29%','Não 0%'],
+    continualeg:['Sim 86%','Em dúvida 14%','Não 0%'],
+    faculleg:['Parcialmente 71%','Não 14%','Sim 14%'],
+    freelaleg:['Sim 43%','Às vezes 14%','Não 43%'],
+    cargaleg:['+40h 20%','30–40h 20%','20–30h 57%','–20h 20%'],
+    tipoleg:['Presencial 57%','Híbrido 43%','Remoto 0%'],
+    satisfSub:'5 de 7 dizem Sim',freelaSub:'Sim + às vezes',
+    faculSub:'1 diz "Sim" plenamente'
+  },
+  profissional:{
+    n:26,satisfPct:35,freelaPct:69,faculPct:0,
+    satisf:[9,15,2],continua:[17,6,3],facul:[13,13,0],
+    freela:[16,2,8],carga:[10,8,5,2],tipo:[20,3,2],
+    satisfLeg:['Sim 35%','Mais ou menos 58%','Não 8%'],
+    continualeg:['Sim 65%','Em dúvida 23%','Não 12%'],
+    faculleg:['Parcialmente 50%','Não 50%','Sim 0%'],
+    freelaleg:['Sim 62%','Às vezes 8%','Não 31%'],
+    cargaleg:['+40h 54%','30–40h 44%','20–30h 27%','–20h 11%'],
+    tipoleg:['Presencial 80%','Híbrido 12%','Remoto 8%'],
+    satisfSub:'9 de 26 dizem Sim',freelaSub:'Sim + às vezes',
+    faculSub:'Nenhum diz "Sim" plenamente'
+  }
+};
+
+let charts = {};
+let currentFilter = 'todos';
+
+// ─── CHART HELPERS ───────────────────────────────────────────────
+const TT = {
+  backgroundColor:'#1E2438',borderColor:'#2E3554',borderWidth:1,
+  titleColor:'#F0F4FF',bodyColor:'#8891B2',padding:10
+};
+function donut(id,data,colors,labels){
+  if(charts[id]) charts[id].destroy();
+  const ctx=document.getElementById(id); if(!ctx) return;
+  charts[id]=new Chart(ctx,{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'66%',
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.label}: ${c.raw}`}}}}});
+}
+function hbars(id,items){
+  const el=document.getElementById(id); if(!el) return;
+  const max=Math.max(...items.map(i=>i.v));
+  el.innerHTML=items.map(i=>`
+    <div class="hbar">
+      <div class="hbar-label">${i.l}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${Math.round(i.v/max*100)}%;background:${i.c};color:${i.tc||'#000'}">${i.v}</div></div>
+      <div class="hbar-pct">${i.p||''}</div>
+    </div>`).join('');
+}
+function setLegend(id,items,colors){
+  const el=document.getElementById(id); if(!el) return;
+  const C=['#00D4FF','#FFB547','#FF5C6A','#4E9EFF','#00E599','#8B79F8'];
+  el.innerHTML=items.map((t,i)=>`<span class="leg"><span class="leg-dot" style="background:${colors?colors[i]:C[i%6]}"></span>${t}</span>`).join('');
+}
+
+// ─── STATIC CHARTS ───────────────────────────────────────────────
+function initStatic(){
+  donut('c-nivel',[26,17,7],['#00D4FF','#00E599','#FFB547'],['Profissional','Estudante','Estagiário']);
+  donut('c-desloc',[20,18,6],['#00E599','#FFB547','#FF5C6A'],['Tranquilo','Moderado','Cansativo']);
+
+  hbars('bar-eng',[
+    {l:'Engenharia Civil',v:30,c:'#00D4FF',tc:'#000',p:'60%'},
+    {l:'Mecânica',v:6,c:'#00E599',tc:'#000',p:'12%'},
+    {l:'Comp/Software',v:4,c:'#8B79F8',tc:'#FFF',p:'8%'},
+    {l:'Saneamento/Amb.',v:3,c:'#4E9EFF',tc:'#000',p:'6%'},
+    {l:'Elétrica',v:2,c:'#FFB547',tc:'#000',p:'4%'},
+    {l:'Florestal',v:2,c:'#2E3554',tc:'#8891B2',p:'4%'},
+    {l:'Outros',v:3,c:'#1E2438',tc:'#4E5A78',p:'6%'},
+  ]);
+  hbars('bar-atuacao',[
+    {l:'Obras',v:15,c:'#00D4FF',tc:'#000',p:'30%'},
+    {l:'Projetos',v:8,c:'#00E599',tc:'#000',p:'16%'},
+    {l:'Saneamento',v:7,c:'#4E9EFF',tc:'#000',p:'14%'},
+    {l:'Transportes',v:3,c:'#FFB547',tc:'#000',p:'6%'},
+    {l:'Ind./Manutenção',v:3,c:'#8B79F8',tc:'#FFF',p:'6%'},
+    {l:'Estruturas',v:2,c:'#FF5C6A',tc:'#000',p:'4%'},
+    {l:'Dados/IA/Energia',v:3,c:'#2E3554',tc:'#8891B2',p:'6%'},
+  ]);
+  hbars('bar-cidade',[
+    {l:'São Luís - MA',v:22,c:'#00E599',tc:'#000',p:'44%'},
+    {l:'Pará (regiões)',v:13,c:'#00D4FF',tc:'#000',p:'26%'},
+    {l:'Outros estados',v:10,c:'#2E3554',tc:'#8891B2',p:'20%'},
+    {l:'Espírito Santo',v:2,c:'#4E9EFF',tc:'#000',p:'4%'},
+    {l:'SC / SP / GO',v:3,c:'#1E2438',tc:'#4E5A78',p:'6%'},
+  ]);
+  hbars('bar-interesse',[
+    {l:'Oportunidades',v:19,c:'#00D4FF',tc:'#000',p:'38%'},
+    {l:'Parcerias/projetos',v:13,c:'#00E599',tc:'#000',p:'26%'},
+    {l:'Networking',v:12,c:'#8B79F8',tc:'#FFF',p:'24%'},
+    {l:'Mentorias',v:6,c:'#FFB547',tc:'#000',p:'12%'},
+  ]);
+  hbars('bar-tools',[
+    {l:'Excel',v:40,c:'#00D4FF',tc:'#000',p:'80%'},
+    {l:'AutoCAD',v:25,c:'#00E599',tc:'#000',p:'50%'},
+    {l:'Revit',v:16,c:'#8B79F8',tc:'#FFF',p:'32%'},
+    {l:'Python',v:8,c:'#FFB547',tc:'#000',p:'16%'},
+    {l:'Power BI',v:8,c:'#4E9EFF',tc:'#000',p:'16%'},
+    {l:'MS Project',v:4,c:'#FF5C6A',tc:'#000',p:'8%'},
+    {l:'Civil 3D / QGIS',v:4,c:'#2E3554',tc:'#8891B2',p:'8%'},
+    {l:'SQL / Eberick / TQS',v:6,c:'#1E2438',tc:'#4E5A78',p:'12%'},
+  ]);
+  hbars('bar-learn',[
+    {l:'IA / Automação',v:13,c:'#FF5C6A',tc:'#000',p:'26%'},
+    {l:'Revit / BIM',v:10,c:'#8B79F8',tc:'#FFF',p:'20%'},
+    {l:'Python / Prog.',v:10,c:'#FFB547',tc:'#000',p:'20%'},
+    {l:'Prática / Obras',v:9,c:'#EF9F27',tc:'#000',p:'18%'},
+    {l:'Power BI',v:6,c:'#4E9EFF',tc:'#000',p:'12%'},
+    {l:'Inglês / Design',v:2,c:'#2E3554',tc:'#8891B2',p:'4%'},
+  ]);
+
+  // Radar
+  if(charts['c-radar']) charts['c-radar'].destroy();
+  const rCtx=document.getElementById('c-radar'); if(!rCtx) return;
+  charts['c-radar']=new Chart(rCtx,{type:'radar',
+    data:{labels:['Excel','AutoCAD','Revit/BIM','Python','Power BI','IA/GPT','SQL','MS Project'],
+      datasets:[
+        {label:'Em uso (%)',data:[80,50,32,16,16,4,4,8],borderColor:'#00D4FF',backgroundColor:'rgba(0,212,255,.08)',pointBackgroundColor:'#00D4FF',borderWidth:2},
+        {label:'Precisa aprender',data:[0,0,20,20,12,26,4,0],borderColor:'#FF5C6A',backgroundColor:'rgba(255,92,106,.08)',pointBackgroundColor:'#FF5C6A',borderWidth:2,borderDash:[5,3]}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{r:{backgroundColor:'rgba(24,29,48,.5)',grid:{color:'rgba(46,53,84,.7)'},angleLines:{color:'rgba(46,53,84,.7)'},
+        pointLabels:{color:'#8891B2',font:{size:11,family:'Outfit'}},ticks:{display:false},suggestedMin:0,suggestedMax:100}},
+      plugins:{legend:{labels:{color:'#8891B2',font:{size:11},boxWidth:12}},tooltip:{...TT}}}});
+
+  // Interesse bar
+  if(charts['c-interesse-bar']) charts['c-interesse-bar'].destroy();
+  const ibCtx=document.getElementById('c-interesse-bar'); if(!ibCtx) return;
+  charts['c-interesse-bar']=new Chart(ibCtx,{type:'bar',
+    data:{labels:['Oportunidades de trabalho','Parcerias / projetos','Networking na área','Mentorias / troca'],
+      datasets:[{data:[19,13,12,6],backgroundColor:['#00D4FF','#00E599','#8B79F8','#FFB547'],borderRadius:6,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      scales:{x:{grid:{color:'rgba(46,53,84,.4)'},ticks:{color:'#4E5A78',font:{size:10}},border:{display:false}},
+        y:{grid:{display:false},ticks:{color:'#8891B2',font:{size:11}}}},
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.raw} respondentes`}}}}});
+
+  // Cross satisfação
+  if(charts['c-cross-satisf']) charts['c-cross-satisf'].destroy();
+  const csCtx=document.getElementById('c-cross-satisf'); if(!csCtx) return;
+  charts['c-cross-satisf']=new Chart(csCtx,{type:'bar',
+    data:{labels:['Profissional formado','Estudante','Estagiário'],
+      datasets:[
+        {label:'Sim',data:[35,71,71],backgroundColor:'rgba(0,229,153,.75)',borderRadius:4},
+        {label:'Mais ou menos',data:[58,18,29],backgroundColor:'rgba(255,181,71,.75)',borderRadius:4},
+        {label:'Não',data:[8,0,0],backgroundColor:'rgba(255,92,106,.75)',borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#8891B2',font:{size:11}}},
+        y:{stacked:true,max:100,grid:{color:'rgba(46,53,84,.4)'},border:{display:false},ticks:{callback:v=>v+'%',color:'#4E5A78',font:{size:10}}}},
+      plugins:{legend:{labels:{color:'#8891B2',font:{size:11},boxWidth:12}},tooltip:{...TT,callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}%`}}}}});
+}
+
+// ─── FILTER-DRIVEN CHARTS ────────────────────────────────────────
+function updateCharts(f){
+  const d=D[f];
+  document.getElementById('k-total').textContent=d.n;
+  document.getElementById('k-satisf').textContent=d.satisfPct+'%';
+  document.getElementById('k-satisf-sub').textContent=d.satisfSub;
+  document.getElementById('k-freela').textContent=d.freelaPct+'%';
+  document.getElementById('k-freela-sub').textContent=d.freelaSub;
+  document.getElementById('k-facul').textContent=d.faculPct+'%';
+  document.getElementById('k-facul-sub').textContent=d.faculSub;
+
+  donut('c-satisf',d.satisf,['#00E599','#FFB547','#FF5C6A'],['Sim','Mais ou menos','Não']);
+  donut('c-continua',d.continua,['#00D4FF','#FFB547','#FF5C6A'],['Sim','Em dúvida','Não']);
+  donut('c-facul',d.facul,['#FFB547','#FF5C6A','#00E599'],['Parcialmente','Não','Sim']);
+  donut('c-freela',d.freela,['#00D4FF','#FFB547','#2E3554'],['Sim','Às vezes','Não']);
+  donut('c-carga',d.carga,['#FF5C6A','#FFB547','#00E599','#4E9EFF'],['Mais de 40h','30h a 40h','20h a 30h','Até 20h']);
+  donut('c-tipo',d.tipo,['#00D4FF','#8B79F8','#FFB547'],['Presencial','Híbrido','Remoto']);
+
+  setLegend('leg-satisf',d.satisfLeg,['#00E599','#FFB547','#FF5C6A']);
+  setLegend('leg-continua',d.continualeg,['#00D4FF','#FFB547','#FF5C6A']);
+  setLegend('leg-facul',d.faculleg,['#FFB547','#FF5C6A','#00E599']);
+  setLegend('leg-freela',d.freelaleg,['#00D4FF','#FFB547','#2E3554']);
+  setLegend('leg-carga',d.cargaleg,['#FF5C6A','#FFB547','#00E599','#4E9EFF']);
+  setLegend('leg-tipo',d.tipoleg,['#00D4FF','#8B79F8','#FFB547']);
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+const PAGES={
+  geral:['Visão Geral','Panorama completo · 50 respondentes · Março 2026'],
+  perfil:['Perfil & Rotina','Distribuição, carga horária e modo de trabalho'],
+  ferramentas:['Ferramentas & Aprendizado','Stack atual vs lacunas declaradas — 50 respondentes'],
+  satisfacao:['Satisfação & Carreira','Percepção de valor, motivação e perspectiva'],
+  insights:['Insights Estratégicos','6 achados-chave da pesquisa']
+};
+function goPage(p,el){
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  el.classList.add('active');
+  const [t,s]=PAGES[p];
+  document.getElementById('page-title').textContent=t;
+  document.getElementById('page-sub').textContent=s;
+}
+function setFilter(f,el){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter=f;
+  updateCharts(f);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+initStatic();
+updateCharts('todos');
+</script>
+</body>
+</html>
